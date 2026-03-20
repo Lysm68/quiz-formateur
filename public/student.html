@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#4f46e5">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Quiz Live</title>
+<style>
+:root {
+  --primary: #4f46e5;
+  --primary-dk: #3730a3;
+  --success: #16a34a;
+  --success-bg: #dcfce7;
+  --danger: #dc2626;
+  --danger-bg: #fee2e2;
+  --warn: #d97706;
+  --bg: #f8fafc;
+  --card: #ffffff;
+  --text: #1e293b;
+  --muted: #64748b;
+  --border: #e2e8f0;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); }
+
+/* ── SHELL ── */
+.shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 16px 40px;
+}
+.hdr {
+  width: 100%; max-width: 480px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 0 8px;
+}
+.hdr .logo { font-size: 1rem; font-weight: 800; color: var(--primary); }
+.hdr .tag  { font-size: .8rem; color: var(--muted); background: white; border-radius: 20px; padding: 4px 12px; border: 1.5px solid var(--border); }
+
+/* ── SCREENS ── */
+.scr { display: none; width: 100%; max-width: 480px; flex-direction: column; align-items: center; gap: 16px; padding-top: 16px; flex: 1; }
+.scr.on { display: flex; }
+
+/* ── CARD ── */
+.card { width: 100%; background: var(--card); border-radius: 20px; padding: 28px 22px; box-shadow: 0 2px 16px rgba(0,0,0,.06); }
+
+/* ── JOIN ── */
+.hero-ico { font-size: 4rem; text-align: center; margin-bottom: 8px; }
+.hero-h   { font-size: 1.6rem; font-weight: 900; text-align: center; }
+.hero-sub { font-size: .9rem; color: var(--muted); text-align: center; margin-top: 4px; line-height: 1.5; }
+.lbl  { font-size: .85rem; font-weight: 600; color: var(--muted); display: block; margin-bottom: 6px; }
+.inp  { border: 2px solid var(--border); border-radius: 14px; padding: 14px 18px; font-size: 1.05rem; font-family: inherit; outline: none; width: 100%; margin-bottom: 12px; transition: border-color .2s; background: var(--bg); color: var(--text); }
+.inp:focus { border-color: var(--primary); background: white; }
+.err  { color: var(--danger); font-size: .85rem; text-align: center; min-height: 20px; margin-bottom: 6px; }
+
+/* ── BUTTON ── */
+.btn { width: 100%; padding: 15px; border: none; border-radius: 14px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all .18s; font-family: inherit; }
+.btn:active { transform: scale(.97); }
+.btn-primary { background: var(--primary); color: white; }
+.btn-primary:hover { background: var(--primary-dk); }
+.btn-ghost { background: var(--bg); color: var(--text); border: 2px solid var(--border); }
+
+/* ── WAIT ── */
+.pulse-wrap { position: relative; width: 80px; height: 80px; margin: 0 auto 14px; }
+.pulse-ring { position: absolute; inset: 0; border-radius: 50%; background: rgba(79,70,229,.12); animation: pring 1.8s ease-out infinite; }
+.pulse-ring:nth-child(2) { animation-delay: .6s; }
+.pulse-ring:nth-child(3) { animation-delay: 1.2s; }
+.pulse-dot  { position: absolute; inset: 18px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+.wait-title { font-size: 1.1rem; font-weight: 700; text-align: center; }
+.wait-sub   { font-size: .88rem; color: var(--muted); text-align: center; line-height: 1.5; margin-top: 6px; }
+.dots span  { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--muted); margin: 0 2px; animation: dbounce .8s ease infinite; }
+.dots span:nth-child(2) { animation-delay: .15s; }
+.dots span:nth-child(3) { animation-delay: .30s; }
+
+/* ── QUESTION ── */
+.q-prog-wrap { width: 100%; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.q-prog-fill { height: 100%; background: var(--primary); border-radius: 2px; transition: width .4s; }
+.q-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.q-label { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+.q-label.num { color: var(--primary); font-size: .85rem; letter-spacing: 0; text-transform: none; }
+.q-body { font-size: clamp(1rem, 4vw, 1.12rem); font-weight: 700; line-height: 1.5; color: var(--text); margin: 10px 0 18px; }
+.opts { display: flex; flex-direction: column; gap: 10px; }
+.opt-btn {
+  width: 100%; padding: 15px 18px; border-radius: 14px; border: none; font-size: .95rem; font-weight: 600; cursor: pointer; text-align: left;
+  display: flex; align-items: center; gap: 12px; transition: all .15s; font-family: inherit; color: white; line-height: 1.3;
+}
+.opt-btn:active { transform: scale(.98); }
+.opt-btn.A { background: #6366f1; }
+.opt-btn.B { background: #8b5cf6; }
+.opt-btn.C { background: #ec4899; }
+.opt-btn.D { background: #f97316; }
+.opt-btn:disabled { filter: brightness(.6); cursor: default; transform: none !important; }
+.opt-btn.sel { filter: brightness(1.15); border: 2.5px solid rgba(255,255,255,.6); transform: scale(1.02) !important; }
+.opt-ltr { width: 28px; height: 28px; border-radius: 8px; background: rgba(255,255,255,.25); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: .84rem; flex-shrink: 0; }
+
+/* ── ANSWERED ── */
+.ans-ico { width: 80px; height: 80px; border-radius: 50%; background: rgba(79,70,229,.1); display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 14px; animation: pop .4s ease; }
+.ans-title { font-size: 1.15rem; font-weight: 800; text-align: center; }
+.ans-choice { font-size: .9rem; color: var(--muted); text-align: center; margin-top: 6px; }
+
+/* ── RESULT ── */
+.res-ico { width: 100px; height: 100px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.8rem; margin: 0 auto 14px; }
+.res-ico.ok  { background: var(--success-bg); animation: pop .45s cubic-bezier(.34,1.56,.64,1); }
+.res-ico.ko  { background: var(--danger-bg);  animation: pop .35s ease, shake .45s .35s ease; }
+.res-title   { font-size: 1.5rem; font-weight: 900; text-align: center; }
+.res-title.ok { color: var(--success); }
+.res-title.ko { color: var(--danger); }
+.ans-box { border-radius: 12px; padding: 13px 15px; margin-top: 12px; font-size: .9rem; line-height: 1.5; }
+.ans-box.ok  { background: var(--success-bg); color: #166534; }
+.ans-box.ko  { background: var(--danger-bg);  color: #991b1b; }
+.ans-box.good{ background: var(--success-bg); color: #166534; }
+.missed-box  { background: #fef9c3; color: #854d0e; border-radius: 12px; padding: 13px 15px; margin-top: 12px; font-size: .9rem; }
+
+/* ── RESET ── */
+.rst-ico   { font-size: 3.5rem; text-align: center; margin-bottom: 10px; }
+.rst-title { font-size: 1.3rem; font-weight: 800; text-align: center; }
+.rst-sub   { font-size: .9rem; color: var(--muted); text-align: center; margin-top: 6px; line-height: 1.5; }
+
+/* ── OVERLAY ── */
+#disco { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.72); z-index: 999; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: white; text-align: center; padding: 24px; }
+#disco.on { display: flex; }
+#disco .d-ico { font-size: 2.5rem; }
+#disco .d-msg { font-size: 1.05rem; font-weight: 700; }
+#disco .d-sub { font-size: .88rem; opacity: .7; }
+#disco button { margin-top: 8px; padding: 12px 28px; background: white; color: var(--primary); border: none; border-radius: 12px; font-weight: 700; font-size: .95rem; cursor: pointer; }
+
+/* ── ANIMATIONS ── */
+@keyframes pring  { 0%{transform:scale(.85);opacity:.8} 100%{transform:scale(1.5);opacity:0} }
+@keyframes pop    { 0%{transform:scale(.5);opacity:0} 80%{transform:scale(1.08)} 100%{transform:scale(1);opacity:1} }
+@keyframes shake  { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)} 40%{transform:translateX(8px)} 60%{transform:translateX(-5px)} 80%{transform:translateX(5px)} }
+@keyframes dbounce{ 0%,100%{transform:translateY(0)} 40%{transform:translateY(-8px)} }
+@keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+.fu { animation: fadeUp .35s ease; }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <header class="hdr">
+    <div class="logo">🎓 Quiz Live</div>
+    <div class="tag" id="hdr-name" style="display:none;"></div>
+  </header>
+
+  <!-- JOIN -->
+  <section class="scr on" id="scr-join">
+    <div class="card fu">
+      <div class="hero-ico">📝</div>
+      <div class="hero-h">Rejoindre le quiz</div>
+      <div class="hero-sub">Entrez votre prénom pour participer en direct</div>
+    </div>
+    <div class="card fu">
+      <label class="lbl" for="name-inp">Votre prénom</label>
+      <input class="inp" id="name-inp" type="text" placeholder="ex : Alice" maxlength="25" autocomplete="given-name" autocapitalize="words">
+      <div class="err" id="join-err"></div>
+      <button class="btn btn-primary" onclick="joinQuiz()">Rejoindre le quiz →</button>
+    </div>
+  </section>
+
+  <!-- WAIT -->
+  <section class="scr" id="scr-wait">
+    <div class="card fu" style="text-align:center;padding:40px 22px;">
+      <div class="pulse-wrap">
+        <div class="pulse-ring"></div>
+        <div class="pulse-ring"></div>
+        <div class="pulse-ring"></div>
+        <div class="pulse-dot">🎓</div>
+      </div>
+      <div class="wait-title">En attente du formateur…</div>
+      <div class="wait-sub">La question apparaîtra ici dès qu'elle sera lancée.</div>
+      <div style="margin-top:20px;" class="dots"><span></span><span></span><span></span></div>
+    </div>
+  </section>
+
+  <!-- QUESTION -->
+  <section class="scr" id="scr-q">
+    <div class="card fu" style="padding:20px 20px;">
+      <div class="q-meta">
+        <span class="q-label" id="q-label">Question</span>
+        <span class="q-label num" id="q-num">1/1</span>
+      </div>
+      <div class="q-prog-wrap"><div class="q-prog-fill" id="q-prog"></div></div>
+      <div class="q-body" id="q-body">Texte de la question</div>
+      <div class="opts" id="q-opts"></div>
+    </div>
+  </section>
+
+  <!-- ANSWERED -->
+  <section class="scr" id="scr-ans">
+    <div class="card fu" style="text-align:center;padding:40px 22px;">
+      <div class="ans-ico">✉️</div>
+      <div class="ans-title">Réponse envoyée !</div>
+      <div class="ans-choice" id="ans-choice"></div>
+      <div style="margin-top:22px;" class="dots"><span></span><span></span><span></span></div>
+      <div style="margin-top:10px;font-size:.85rem;color:var(--muted);">En attente de la révélation…</div>
+    </div>
+  </section>
+
+  <!-- RESULT -->
+  <section class="scr" id="scr-res">
+    <div class="card fu" id="res-card" style="text-align:center;padding:34px 22px;">
+      <div class="res-ico" id="res-ico"></div>
+      <div class="res-title" id="res-title"></div>
+      <div id="res-detail"></div>
+    </div>
+    <button class="btn btn-ghost" style="max-width:480px;" onclick="show('scr-wait')">Attendre la prochaine question →</button>
+  </section>
+
+  <!-- MISSED -->
+  <section class="scr" id="scr-missed">
+    <div class="card fu" style="text-align:center;padding:34px 22px;">
+      <div style="font-size:3rem;margin-bottom:10px;">⏰</div>
+      <div style="font-size:1.3rem;font-weight:800;color:var(--warn);">Temps écoulé</div>
+      <div style="color:var(--muted);font-size:.9rem;margin-top:8px;line-height:1.5;">Vous n'avez pas répondu.<br>La bonne réponse était :</div>
+      <div class="missed-box" id="missed-ans" style="margin-top:12px;font-weight:700;"></div>
+    </div>
+    <button class="btn btn-ghost" style="max-width:480px;" onclick="show('scr-wait')">Attendre la prochaine question →</button>
+  </section>
+
+  <!-- RESET -->
+  <section class="scr" id="scr-reset">
+    <div class="card fu" style="text-align:center;padding:40px 22px;">
+      <div class="rst-ico">🔄</div>
+      <div class="rst-title">Session réinitialisée</div>
+      <div class="rst-sub">Le formateur a remis à zéro la session.</div>
+    </div>
+    <button class="btn btn-primary" style="max-width:480px;" onclick="rejoin()">Rejoindre à nouveau →</button>
+  </section>
+</div>
+
+<!-- Disconnect overlay -->
+<div id="disco">
+  <div class="d-ico">📡</div>
+  <div class="d-msg">Connexion perdue</div>
+  <div class="d-sub">Vérifiez que vous êtes sur le même réseau Wi-Fi.</div>
+  <button onclick="location.reload()">Actualiser la page</button>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════
+const clientId  = 'std-' + Math.random().toString(36).slice(2);
+let sse;
+let myName      = '';
+let myAnswer    = null;
+let currentQ    = null;
+const LABELS    = ['A','B','C','D'];
+const CLASSES   = ['A','B','C','D'];
+
+// ══════════════════════════════════════════
+// SCREENS
+// ══════════════════════════════════════════
+function show(id) {
+  document.querySelectorAll('.scr').forEach(s => s.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ══════════════════════════════════════════
+// JOIN
+// ══════════════════════════════════════════
+document.getElementById('name-inp').addEventListener('keydown', e => { if (e.key === 'Enter') joinQuiz(); });
+
+function joinQuiz() {
+  const name = document.getElementById('name-inp').value.trim();
+  if (!name) { document.getElementById('join-err').textContent = 'Veuillez entrer votre prénom.'; return; }
+  document.getElementById('join-err').textContent = '';
+  myName = name;
+  openSSE();
+}
+
+function rejoin() {
+  myName = ''; myAnswer = null; currentQ = null;
+  document.getElementById('name-inp').value = '';
+  document.getElementById('hdr-name').style.display = 'none';
+  show('scr-join');
+  if (sse) sse.close();
+}
+
+// ══════════════════════════════════════════
+// SSE + ACTIONS
+// ══════════════════════════════════════════
+function openSSE() {
+  // FIX : nom passé directement dans l'URL SSE → pas de race condition
+  const url = `/events?clientId=${encodeURIComponent(clientId)}&role=student&name=${encodeURIComponent(myName)}`;
+  sse = new EventSource(url);
+  sse.onmessage = e => handle(JSON.parse(e.data));
+  sse.onerror   = () => document.getElementById('disco').classList.add('on');
+}
+
+function act(obj) {
+  fetch('/action', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ ...obj, clientId }),
+  });
+}
+
+// ══════════════════════════════════════════
+// MESSAGES
+// ══════════════════════════════════════════
+function handle(msg) {
+  switch (msg.type) {
+
+    case 'student-ok': {
+      myName   = msg.name;
+      myAnswer = msg.myAnswer ?? null;
+      document.getElementById('hdr-name').textContent = myName;
+      document.getElementById('hdr-name').style.display = '';
+
+      if (msg.phase === 'active' && msg.currentQuestion) {
+        currentQ = msg.currentQuestion;
+        if (myAnswer !== null) showAnswered(myAnswer, msg.currentQuestion.options);
+        else                   showQuestion(msg.currentQuestion);
+      } else if (msg.phase === 'closed' && msg.currentQuestion) {
+        currentQ = msg.currentQuestion;
+        if (myAnswer !== null) showAnswered(myAnswer, msg.currentQuestion.options);
+        else                   show('scr-wait');
+      } else if (msg.phase === 'revealed' && msg.currentQuestion) {
+        currentQ = msg.currentQuestion;
+        showResult(myAnswer, msg.correctIndex, msg.currentQuestion.options);
+      } else {
+        show('scr-wait');
+      }
+      break;
+    }
+
+    case 'name-taken':
+      document.getElementById('join-err').textContent = '❌ Ce prénom est déjà utilisé, choisissez-en un autre.';
+      break;
+
+    case 'question-active':
+      myAnswer = null;
+      currentQ = msg.question;
+      showQuestion(msg.question);
+      break;
+
+    case 'answers-closed':
+      if (myAnswer === null) show('scr-wait');
+      break;
+
+    case 'answer-revealed':
+      showResult(myAnswer, msg.correctIndex, currentQ?.options || []);
+      break;
+
+    case 'session-reset':
+      show('scr-reset');
+      break;
+  }
+}
+
+// ══════════════════════════════════════════
+// QUESTION
+// ══════════════════════════════════════════
+function showQuestion(q) {
+  const { index, total, text, options } = q;
+  document.getElementById('q-label').textContent = `Question ${index + 1}`;
+  document.getElementById('q-num').textContent   = `${index + 1} / ${total}`;
+  document.getElementById('q-prog').style.width  = `${(index + 1) / total * 100}%`;
+  document.getElementById('q-body').textContent  = text;
+
+  const cont = document.getElementById('q-opts');
+  cont.innerHTML = options.map((opt, i) => `
+    <button class="opt-btn ${CLASSES[i]}" id="ob${i}" onclick="submitAns(${i})">
+      <span class="opt-ltr">${LABELS[i]}</span>
+      <span>${esc(opt)}</span>
+    </button>
+  `).join('');
+
+  show('scr-q');
+}
+
+function submitAns(idx) {
+  if (myAnswer !== null) return;
+  myAnswer = idx;
+  document.querySelectorAll('.opt-btn').forEach((b, i) => {
+    b.disabled = true;
+    if (i === idx) b.classList.add('sel');
+  });
+  act({ type: 'student-answer', optionIndex: idx });
+  setTimeout(() => showAnswered(idx, currentQ?.options || []), 380);
+}
+
+function showAnswered(idx, options) {
+  const lbl = LABELS[idx] ?? '?';
+  const txt = options[idx] || '';
+  document.getElementById('ans-choice').innerHTML =
+    `Option <strong>${lbl}</strong> : ${esc(txt)}`;
+  show('scr-ans');
+}
+
+// ══════════════════════════════════════════
+// RESULT
+// ══════════════════════════════════════════
+function showResult(myAns, correctIdx, options) {
+  if (myAns === null) {
+    // Did not answer
+    document.getElementById('missed-ans').textContent =
+      `Option ${LABELS[correctIdx]} : ${options[correctIdx] || ''}`;
+    show('scr-missed');
+    return;
+  }
+
+  const ok = myAns === correctIdx;
+  const ico = document.getElementById('res-ico');
+  const tit = document.getElementById('res-title');
+  const det = document.getElementById('res-detail');
+
+  // Re-trigger animation
+  ico.className = '';
+  void ico.offsetWidth;
+  ico.textContent = ok ? '✅' : '❌';
+  ico.className   = `res-ico ${ok ? 'ok' : 'ko'}`;
+  tit.textContent = ok ? 'Bonne réponse !' : 'Mauvaise réponse';
+  tit.className   = `res-title ${ok ? 'ok' : 'ko'}`;
+
+  if (ok) {
+    det.innerHTML = `
+      <div class="ans-box ok">
+        <strong>Option ${LABELS[myAns]} :</strong> ${esc(options[myAns] || '')}
+      </div>`;
+  } else {
+    det.innerHTML = `
+      <div class="ans-box ko">
+        <strong>Votre réponse — Option ${LABELS[myAns]} :</strong> ${esc(options[myAns] || '')}
+      </div>
+      <div class="ans-box good" style="margin-top:8px;">
+        <strong>✓ Bonne réponse — Option ${LABELS[correctIdx]} :</strong> ${esc(options[correctIdx] || '')}
+      </div>`;
+  }
+  show('scr-res');
+}
+
+// ══════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: quiz-formateur
+    runtime: python
+    buildCommand: ""
+    startCommand: python server.py
+    envVars:
+      - key: TRAINER_PASSWORD
+        value: formateur2025
