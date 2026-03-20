@@ -137,20 +137,27 @@ def compute_stats(room_id):
             return None
         q = questions[session['currentIndex']]
         counts = [0] * len(q['options'])
-        for idx in session['answers'].values():
-            if 0 <= idx < len(counts):
-                counts[idx] += 1
+        for ans in session['answers'].values():
+            # ans can be int (single) or list (multiple)
+            if isinstance(ans, list):
+                for idx in ans:
+                    if 0 <= idx < len(counts):
+                        counts[idx] += 1
+            elif isinstance(ans, int) and 0 <= ans < len(counts):
+                counts[ans] += 1
         answered = len(session['answers'])
         total = sum(1 for c in clients.values()
                     if c['role'] == 'student' and c.get('room') == room_id)
         percs = [round(c / answered * 100) if answered > 0 else 0 for c in counts]
+        # Support both old correctIndex and new correctIndexes
+        correct = q.get('correctIndexes', [q['correctIndex']] if 'correctIndex' in q else [])
         return {
             'totalStudents': total,
             'answeredCount': answered,
             'answeredPercent': round(answered / total * 100) if total > 0 else 0,
             'counts': counts,
             'percentages': percs,
-            'correctIndex': q['correctIndex'] if session['phase'] == 'revealed' else None,
+            'correctIndexes': correct if session['phase'] == 'revealed' else None,
         }
 
 
@@ -345,7 +352,7 @@ class Handler(BaseHTTPRequestHandler):
                 questions = room['questions']
                 phase = session['phase']
                 my_answer = session['answers'].get(client_id)
-                correct_idx = None
+                correct_idxs = None
                 current_q = None
                 if session['currentIndex'] >= 0 and phase != 'idle' and session['currentIndex'] < len(questions):
                     sq = questions[session['currentIndex']]
@@ -356,7 +363,7 @@ class Handler(BaseHTTPRequestHandler):
                         'options': sq['options'],
                     }
                     if phase == 'revealed':
-                        correct_idx = sq['correctIndex']
+                        correct_idxs = sq.get('correctIndexes', [sq['correctIndex']] if 'correctIndex' in sq else [])
 
             self._sse({
                 'type': 'student-ok',
@@ -364,7 +371,7 @@ class Handler(BaseHTTPRequestHandler):
                 'phase': phase,
                 'currentQuestion': current_q,
                 'myAnswer': my_answer,
-                'correctIndex': correct_idx,
+                'correctIndexes': correct_idxs,
             })
             push_trainers(room_id, {'type': 'students-update', 'students': get_student_list(room_id)})
 
@@ -424,17 +431,23 @@ class Handler(BaseHTTPRequestHandler):
                 if client_id in session['answers']:
                     push(client_id, {'type': 'already-answered'})
                     return
-                try:
-                    opt_index = int(msg.get('optionIndex', -1))
-                except (TypeError, ValueError):
-                    return
+                # Accept optionIndex (int) or optionIndexes (list)
+                raw = msg.get('optionIndexes', msg.get('optionIndex'))
+                if isinstance(raw, list):
+                    opt_indexes = [int(x) for x in raw]
+                else:
+                    try:
+                        opt_indexes = [int(raw)]
+                    except (TypeError, ValueError):
+                        return
                 if session['currentIndex'] < 0 or session['currentIndex'] >= len(questions):
                     return
                 q = questions[session['currentIndex']]
-                if opt_index < 0 or opt_index >= len(q['options']):
+                num_opts = len(q['options'])
+                if not opt_indexes or any(i < 0 or i >= num_opts for i in opt_indexes):
                     return
-                session['answers'][client_id] = opt_index
-            push(client_id, {'type': 'answer-received', 'optionIndex': opt_index})
+                session['answers'][client_id] = opt_indexes
+            push(client_id, {'type': 'answer-received', 'optionIndexes': opt_indexes})
             push_trainers(room_id, {
                 'type': 'stats-update',
                 'stats': compute_stats(room_id),
@@ -580,10 +593,11 @@ class Handler(BaseHTTPRequestHandler):
                 if session['currentIndex'] < 0 or session['currentIndex'] >= len(questions):
                     return
                 session['phase'] = 'revealed'
-                correct_idx = questions[session['currentIndex']]['correctIndex']
+                q = questions[session['currentIndex']]
+                correct = q.get('correctIndexes', [q['correctIndex']] if 'correctIndex' in q else [])
             push_all(room_id, {
                 'type': 'answer-revealed',
-                'correctIndex': correct_idx,
+                'correctIndexes': correct,
                 'stats': compute_stats(room_id),
             })
 

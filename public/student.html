@@ -322,7 +322,7 @@ function handle(msg) {
         else                   show('scr-wait');
       } else if (msg.phase === 'revealed' && msg.currentQuestion) {
         currentQ = msg.currentQuestion;
-        showResult(myAnswer, msg.correctIndex, msg.currentQuestion.options);
+        showResult(myAnswer, msg.correctIndexes, msg.currentQuestion.options);
       } else {
         show('scr-wait');
       }
@@ -335,6 +335,7 @@ function handle(msg) {
 
     case 'question-active':
       myAnswer = null;
+      selectedOpts = [];
       currentQ = msg.question;
       showQuestion(msg.question);
       break;
@@ -343,8 +344,13 @@ function handle(msg) {
       if (myAnswer === null) show('scr-wait');
       break;
 
+    case 'answer-received':
+      myAnswer = msg.optionIndexes || [msg.optionIndex];
+      showAnswered(myAnswer, currentQ?.options || []);
+      break;
+
     case 'answer-revealed':
-      showResult(myAnswer, msg.correctIndex, currentQ?.options || []);
+      showResult(myAnswer, msg.correctIndexes, currentQ?.options || []);
       break;
 
     case 'session-reset':
@@ -356,8 +362,11 @@ function handle(msg) {
 // ══════════════════════════════════════════
 // QUESTION
 // ══════════════════════════════════════════
+let selectedOpts = [];
+
 function showQuestion(q) {
   const { index, total, text, options } = q;
+  selectedOpts = [];
   document.getElementById('q-label').textContent = `Question ${index + 1}`;
   document.getElementById('q-num').textContent   = `${index + 1} / ${total}`;
   document.getElementById('q-prog').style.width  = `${(index + 1) / total * 100}%`;
@@ -365,52 +374,70 @@ function showQuestion(q) {
 
   const cont = document.getElementById('q-opts');
   cont.innerHTML = options.map((opt, i) => `
-    <button class="opt-btn ${CLASSES[i]}" id="ob${i}" onclick="submitAns(${i})">
+    <button class="opt-btn ${CLASSES[i]}" id="ob${i}" onclick="toggleOpt(${i})">
       <span class="opt-ltr">${LABELS[i]}</span>
       <span>${esc(opt)}</span>
     </button>
-  `).join('');
+  `).join('') + `
+    <button class="opt-btn" id="btn-validate" onclick="submitAns()" style="background:var(--primary,#4f46e5);margin-top:6px;justify-content:center;display:none;">
+      Valider ma reponse
+    </button>
+  `;
 
   show('scr-q');
 }
 
-function submitAns(idx) {
+function toggleOpt(idx) {
   if (myAnswer !== null) return;
-  myAnswer = idx;
-  document.querySelectorAll('.opt-btn').forEach((b, i) => {
-    b.disabled = true;
-    if (i === idx) b.classList.add('sel');
-  });
-  act({ type: 'student-answer', optionIndex: idx });
-  setTimeout(() => showAnswered(idx, currentQ?.options || []), 380);
+  const pos = selectedOpts.indexOf(idx);
+  if (pos >= 0) {
+    selectedOpts.splice(pos, 1);
+    document.getElementById('ob' + idx).classList.remove('sel');
+  } else {
+    selectedOpts.push(idx);
+    document.getElementById('ob' + idx).classList.add('sel');
+  }
+  const valBtn = document.getElementById('btn-validate');
+  valBtn.style.display = selectedOpts.length > 0 ? 'flex' : 'none';
 }
 
-function showAnswered(idx, options) {
-  const lbl = LABELS[idx] ?? '?';
-  const txt = options[idx] || '';
-  document.getElementById('ans-choice').innerHTML =
-    `Option <strong>${lbl}</strong> : ${esc(txt)}`;
+function submitAns() {
+  if (myAnswer !== null || !selectedOpts.length) return;
+  myAnswer = selectedOpts.slice().sort();
+  document.querySelectorAll('.opt-btn').forEach(b => { b.disabled = true; });
+  act({ type: 'student-answer', optionIndexes: myAnswer });
+  setTimeout(() => showAnswered(myAnswer, currentQ?.options || []), 380);
+}
+
+function showAnswered(indexes, options) {
+  if (!Array.isArray(indexes)) indexes = [indexes];
+  const parts = indexes.map(i => `<strong>${LABELS[i]}</strong> : ${esc(options[i] || '')}`);
+  document.getElementById('ans-choice').innerHTML = 'Option' + (parts.length > 1 ? 's ' : ' ') + parts.join(', ');
   show('scr-ans');
 }
 
 // ══════════════════════════════════════════
 // RESULT
 // ══════════════════════════════════════════
-function showResult(myAns, correctIdx, options) {
+function showResult(myAns, correctIdxs, options) {
+  if (!Array.isArray(correctIdxs)) correctIdxs = [correctIdxs];
+  if (!Array.isArray(myAns) && myAns !== null) myAns = [myAns];
+
   if (myAns === null) {
-    // Did not answer
-    document.getElementById('missed-ans').textContent =
-      `Option ${LABELS[correctIdx]} : ${options[correctIdx] || ''}`;
+    const goodParts = correctIdxs.map(ci => `Option ${LABELS[ci]} : ${options[ci] || ''}`);
+    document.getElementById('missed-ans').textContent = goodParts.join(', ');
     show('scr-missed');
     return;
   }
 
-  const ok = myAns === correctIdx;
+  const mySet = new Set(myAns);
+  const correctSet = new Set(correctIdxs);
+  const ok = mySet.size === correctSet.size && [...mySet].every(i => correctSet.has(i));
+
   const ico = document.getElementById('res-ico');
   const tit = document.getElementById('res-title');
   const det = document.getElementById('res-detail');
 
-  // Re-trigger animation
   ico.className = '';
   void ico.offsetWidth;
   ico.textContent = ok ? '✅' : '❌';
@@ -419,18 +446,14 @@ function showResult(myAns, correctIdx, options) {
   tit.className   = `res-title ${ok ? 'ok' : 'ko'}`;
 
   if (ok) {
-    det.innerHTML = `
-      <div class="ans-box ok">
-        <strong>Option ${LABELS[myAns]} :</strong> ${esc(options[myAns] || '')}
-      </div>`;
+    const parts = myAns.map(i => `<strong>Option ${LABELS[i]} :</strong> ${esc(options[i] || '')}`);
+    det.innerHTML = `<div class="ans-box ok">${parts.join('<br>')}</div>`;
   } else {
-    det.innerHTML = `
-      <div class="ans-box ko">
-        <strong>Votre réponse — Option ${LABELS[myAns]} :</strong> ${esc(options[myAns] || '')}
-      </div>
-      <div class="ans-box good" style="margin-top:8px;">
-        <strong>✓ Bonne réponse — Option ${LABELS[correctIdx]} :</strong> ${esc(options[correctIdx] || '')}
-      </div>`;
+    const myParts = myAns.map(i => `<strong>Option ${LABELS[i]} :</strong> ${esc(options[i] || '')}`);
+    const goodParts = correctIdxs.map(i => `<strong>✓ Option ${LABELS[i]} :</strong> ${esc(options[i] || '')}`);
+    det.innerHTML =
+      `<div class="ans-box ko">Votre reponse :<br>${myParts.join('<br>')}</div>` +
+      `<div class="ans-box good" style="margin-top:8px;">Bonne${correctIdxs.length > 1 ? 's' : ''} reponse${correctIdxs.length > 1 ? 's' : ''} :<br>${goodParts.join('<br>')}</div>`;
   }
   show('scr-res');
 }
