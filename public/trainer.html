@@ -359,6 +359,11 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
       <input type="text" id="new-formation-name" placeholder="Nom de la nouvelle formation..." maxlength="60">
       <button class="btn btn-primary btn-sm" onclick="createFormation()">+ Creer</button>
     </div>
+    <div style="display:flex;gap:8px;margin-top:12px;">
+      <button class="btn btn-ghost btn-sm" style="flex:1;" onclick="exportData()">📥 Exporter mes formations</button>
+      <button class="btn btn-ghost btn-sm" style="flex:1;" onclick="document.getElementById('import-file').click()">📤 Importer</button>
+      <input type="file" id="import-file" accept=".json" style="display:none;" onchange="importData(this)">
+    </div>
     <div class="formation-footer">
       <button onclick="logout()">Se deconnecter</button>
     </div>
@@ -997,6 +1002,33 @@ function syncQ() {
 // ══════════════════════════════════════════
 // UTILS
 // ══════════════════════════════════════════
+function exportData() {
+  if (!trainerId) return;
+  const pw = encodeURIComponent(document.getElementById('auth-pw').value.trim());
+  window.location.href = '/export?trainerId=' + encodeURIComponent(trainerId) + '&password=' + pw;
+}
+
+function importData(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.formations || typeof data.formations !== 'object') {
+        toast('Fichier invalide.');
+        return;
+      }
+      action({ type: 'trainer-import', importData: data });
+      toast('Import en cours...');
+    } catch(err) {
+      toast('Erreur de lecture du fichier.');
+    }
+    input.value = '';
+  };
+  reader.readAsText(file);
+}
+
 function copyURL() {
   if (!studentUrl) return;
   navigator.clipboard.writeText(studentUrl).then(() => toast('Lien copie !'));

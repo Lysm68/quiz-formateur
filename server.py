@@ -33,8 +33,8 @@ state_lock = threading.RLock()
 
 DEFAULT_DATA = {
     'trainers': {
-        'sylvain': {'name': 'Sylvain', 'password': 'sylvain'},
-        'invite':  {'name': 'Formateur Invite', 'password': 'invite'},
+        'sylvain': {'name': 'Sylvain', 'password': 'Sylvain'},
+        'invite':  {'name': 'Formateur Invite', 'password': 'Formateur Invite'},
     },
     'formations': {
         'sylvain': {},
@@ -183,6 +183,8 @@ class Handler(BaseHTTPRequestHandler):
             self._handle_sse(params)
         elif path == '/trainers-list':
             self._serve_trainers_list()
+        elif path == '/export':
+            self._handle_export(params)
         else:
             self.send_response(404)
             self.end_headers()
@@ -197,6 +199,32 @@ class Handler(BaseHTTPRequestHandler):
         data = json.dumps(trainers, ensure_ascii=False).encode('utf-8')
         self.send_response(200)
         self.send_header('Content-Type', 'application/json; charset=utf-8')
+        self.send_header('Content-Length', str(len(data)))
+        self._cors()
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _handle_export(self, params):
+        """Export all formations+questions for a trainer as JSON download."""
+        trainer_id = (params.get('trainerId') or [''])[0]
+        password = (params.get('password') or [''])[0]
+        trainers = all_data['trainers']
+        if trainer_id not in trainers or password != trainers[trainer_id]['password']:
+            self.send_response(403)
+            self.end_headers()
+            return
+        with state_lock:
+            formations = all_data['formations'].get(trainer_id, {})
+            export = {
+                'trainerId': trainer_id,
+                'trainerName': trainers[trainer_id]['name'],
+                'formations': formations,
+            }
+        data = json.dumps(export, ensure_ascii=False, indent=2).encode('utf-8')
+        filename = 'quiz-formateur-' + trainer_id + '.json'
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/json; charset=utf-8')
+        self.send_header('Content-Disposition', 'attachment; filename="' + filename + '"')
         self.send_header('Content-Length', str(len(data)))
         self._cors()
         self.end_headers()
@@ -485,6 +513,23 @@ class Handler(BaseHTTPRequestHandler):
                 all_data['formations'][room_id][formation_name] = qs
                 save_data()
             push(client_id, {'type': 'questions-updated', 'questions': qs})
+
+        elif t == 'trainer-import':
+            if role != 'trainer':
+                return
+            import_data = msg.get('importData', {})
+            imported_formations = import_data.get('formations', {})
+            if not isinstance(imported_formations, dict):
+                return
+            with state_lock:
+                if room_id not in all_data['formations']:
+                    all_data['formations'][room_id] = {}
+                for fname, fquestions in imported_formations.items():
+                    if isinstance(fquestions, list):
+                        all_data['formations'][room_id][fname] = fquestions
+                save_data()
+                formations = list(all_data['formations'][room_id].keys())
+            push_trainers(room_id, {'type': 'formations-updated', 'formations': formations})
 
         # ── Quiz session controls ─────────────────────────────────────
         elif t == 'trainer-launch':
