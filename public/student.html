@@ -243,6 +243,7 @@ html, body { height: 100%; font-family: 'Segoe UI', system-ui, sans-serif; backg
 // STATE
 // ══════════════════════════════════════════
 const clientId  = 'std-' + Math.random().toString(36).slice(2);
+const roomId    = new URLSearchParams(window.location.search).get('room') || '';
 let sse;
 let myName      = '';
 let myAnswer    = null;
@@ -285,7 +286,7 @@ function rejoin() {
 // ══════════════════════════════════════════
 function openSSE() {
   // FIX : nom passé directement dans l'URL SSE → pas de race condition
-  const url = `/events?clientId=${encodeURIComponent(clientId)}&role=student&name=${encodeURIComponent(myName)}`;
+  const url = `/events?clientId=${encodeURIComponent(clientId)}&role=student&name=${encodeURIComponent(myName)}&room=${encodeURIComponent(roomId)}`;
   sse = new EventSource(url);
   sse.onmessage = e => handle(JSON.parse(e.data));
   sse.onerror   = () => document.getElementById('disco').classList.add('on');

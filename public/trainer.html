@@ -39,13 +39,36 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
   border-radius: 24px;
   padding: 44px 40px;
   width: 100%;
-  max-width: 400px;
+  max-width: 420px;
   box-shadow: 0 24px 80px rgba(0,0,0,.3);
   text-align: center;
 }
 .auth-card .logo { font-size: 3rem; margin-bottom: 6px; }
 .auth-card h1 { font-size: 1.4rem; font-weight: 800; color: var(--text); margin-bottom: 4px; }
-.auth-card p  { color: var(--muted); font-size: .9rem; margin-bottom: 28px; }
+.auth-card p  { color: var(--muted); font-size: .9rem; margin-bottom: 24px; }
+.auth-error { color: var(--danger); font-size: .88rem; margin-bottom: 10px; min-height: 20px; }
+
+.account-buttons { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+.account-btn {
+  padding: 14px 18px;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  background: white;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text);
+}
+.account-btn:hover { border-color: var(--primary); background: #f5f3ff; }
+.account-btn.selected { border-color: var(--primary); background: #ede9fe; }
+.account-btn .acc-icon { width: 40px; height: 40px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.1rem; }
+.account-btn .acc-name { flex: 1; text-align: left; }
+
 .auth-card input {
   width: 100%;
   border: 2px solid var(--border);
@@ -58,7 +81,62 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
   font-family: inherit;
 }
 .auth-card input:focus { border-color: var(--primary); }
-.auth-error { color: var(--danger); font-size: .88rem; margin-bottom: 10px; min-height: 20px; }
+
+.pw-section { display: none; }
+.pw-section.visible { display: block; }
+
+/* ── FORMATION SCREEN ── */
+#formation-screen {
+  min-height: 100vh;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1e1b4b 0%, #4f46e5 100%);
+}
+.formation-card {
+  background: white;
+  border-radius: 24px;
+  padding: 36px 32px;
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 0 24px 80px rgba(0,0,0,.3);
+}
+.formation-card h2 { font-size: 1.2rem; font-weight: 800; margin-bottom: 4px; }
+.formation-card .sub { color: var(--muted); font-size: .88rem; margin-bottom: 20px; }
+.formation-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; max-height: 340px; overflow-y: auto; }
+.formation-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all .15s;
+  background: white;
+}
+.formation-item:hover { border-color: var(--primary); background: #f5f3ff; }
+.formation-item .fi-icon { font-size: 1.3rem; }
+.formation-item .fi-name { flex: 1; font-weight: 600; font-size: .95rem; }
+.formation-item .fi-del { background: none; border: none; color: #cbd5e1; cursor: pointer; font-size: 1rem; padding: 4px; }
+.formation-item .fi-del:hover { color: var(--danger); }
+.no-formations { text-align: center; color: var(--muted); font-size: .9rem; padding: 24px 0; }
+
+.create-formation-row { display: flex; gap: 8px; }
+.create-formation-row input {
+  flex: 1;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: .9rem;
+  outline: none;
+  font-family: inherit;
+}
+.create-formation-row input:focus { border-color: var(--primary); }
+
+.formation-footer { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); text-align: center; }
+.formation-footer button { background: none; border: none; color: var(--muted); cursor: pointer; font-size: .85rem; font-family: inherit; }
+.formation-footer button:hover { color: var(--danger); }
 
 /* ── MAIN APP ── */
 #app { display: none; min-height: 100vh; }
@@ -82,7 +160,10 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
   border-bottom: 1px solid rgba(255,255,255,.08);
 }
 .sidebar-header h1 { font-size: 1.2rem; font-weight: 800; color: white; }
-.sidebar-header .sub { font-size: .75rem; color: var(--sidebar-text); opacity: .6; }
+.sidebar-header .sub { font-size: .75rem; color: var(--sidebar-text); opacity: .6; margin-top: 2px; }
+.sidebar-header .formation-name { font-size: .8rem; color: #a5b4fc; margin-top: 6px; display: flex; align-items: center; gap: 6px; }
+.sidebar-header .formation-name button { background: rgba(255,255,255,.1); border: none; color: #c7d2fe; font-size: .72rem; padding: 3px 8px; border-radius: 6px; cursor: pointer; font-family: inherit; }
+.sidebar-header .formation-name button:hover { background: rgba(255,255,255,.2); }
 
 .qr-section {
   padding: 20px;
@@ -180,10 +261,7 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 
 /* ── STATS ── */
 .stats-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
-.ring-wrap {
-  position: relative;
-  width: 88px; height: 88px;
-}
+.ring-wrap { position: relative; width: 88px; height: 88px; }
 .ring-svg { width: 88px; height: 88px; transform: rotate(-90deg); }
 .ring-bg   { fill: none; stroke: #e2e8f0; stroke-width: 10; }
 .ring-fill { fill: none; stroke: var(--primary); stroke-width: 10; stroke-linecap: round; stroke-dasharray: 226; stroke-dashoffset: 226; transition: stroke-dashoffset .6s ease; }
@@ -196,7 +274,7 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 
 .bar-chart  { display: flex; flex-direction: column; gap: 10px; }
 .bar-row    { display: flex; align-items: center; gap: 10px; }
-.bar-letter { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: .84rem; flex-shrink: 0; color: white; transition: background .3s; }
+.bar-letter { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: .84rem; flex-shrink: 0; color: white; }
 .bar-letter.A { background: #6366f1; }
 .bar-letter.B { background: #8b5cf6; }
 .bar-letter.C { background: #ec4899; }
@@ -215,6 +293,7 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 .bar-fill.wrong   { background: #cbd5e1 !important; }
 .bar-nums   { font-size: .84rem; font-weight: 700; color: var(--text); width: 64px; text-align: right; flex-shrink: 0; }
 .no-stats   { text-align: center; color: var(--muted); padding: 32px; font-size: .9rem; }
+.stats-hidden { text-align: center; color: var(--muted); padding: 16px; font-size: .88rem; background: var(--bg); border-radius: 10px; }
 
 /* ── EDITOR ── */
 .q-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
@@ -255,108 +334,120 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 </head>
 <body>
 
-<!-- AUTH -->
+<!-- AUTH SCREEN -->
 <div id="auth-screen">
   <div class="auth-card">
     <div class="logo">🎓</div>
     <h1>Quiz Formateur</h1>
-    <p>Tableau de bord — accès réservé</p>
+    <p>Choisissez votre compte pour acceder au tableau de bord</p>
     <div class="auth-error" id="auth-error"></div>
-    <input type="password" id="auth-pw" placeholder="Mot de passe formateur" autocomplete="current-password">
-    <button class="btn btn-primary" style="width:100%;" onclick="authenticate()">Se connecter</button>
+    <div class="account-buttons" id="account-buttons"></div>
+    <div class="pw-section" id="pw-section">
+      <input type="password" id="auth-pw" placeholder="Mot de passe" autocomplete="current-password">
+      <button class="btn btn-primary" style="width:100%;" onclick="authenticate()">Se connecter</button>
+    </div>
+  </div>
+</div>
+
+<!-- FORMATION SELECTOR -->
+<div id="formation-screen">
+  <div class="formation-card">
+    <h2 id="formation-title">Mes formations</h2>
+    <div class="sub" id="formation-sub">Choisissez une formation pour commencer le quiz</div>
+    <div class="formation-list" id="formation-list"></div>
+    <div class="create-formation-row">
+      <input type="text" id="new-formation-name" placeholder="Nom de la nouvelle formation..." maxlength="60">
+      <button class="btn btn-primary btn-sm" onclick="createFormation()">+ Creer</button>
+    </div>
+    <div class="formation-footer">
+      <button onclick="logout()">Se deconnecter</button>
+    </div>
   </div>
 </div>
 
 <!-- MAIN APP -->
 <div id="app">
   <div class="layout">
-
-    <!-- SIDEBAR -->
     <aside class="sidebar">
       <div class="sidebar-header">
         <h1>🎓 Quiz Live</h1>
-        <div class="sub">Interface Formateur</div>
+        <div class="sub" id="trainer-label">Formateur</div>
+        <div class="formation-name" id="formation-label">
+          <span id="current-formation-name"></span>
+          <button onclick="changeFormation()">Changer</button>
+        </div>
       </div>
 
       <div class="qr-section">
-        <span class="section-label">Lien d'accès stagiaires</span>
+        <span class="section-label">Lien d'acces stagiaires</span>
         <img id="qr-img" alt="QR Code">
-        <div class="url-box" id="url-box" onclick="copyURL()">Chargement…</div>
+        <div class="url-box" id="url-box" onclick="copyURL()">Chargement...</div>
         <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:8px;" onclick="copyURL()">📋 Copier le lien</button>
       </div>
 
       <div class="students-section">
         <span class="section-label">
-          Participants connectés
+          Participants connectes
           <span id="student-count">0</span>
         </span>
         <div class="student-list" id="student-list">
-          <div class="no-students">Aucun stagiaire connecté</div>
+          <div class="no-students">Aucun stagiaire connecte</div>
         </div>
       </div>
 
       <div class="sidebar-footer">
-        <button class="btn btn-danger" style="width:100%;" onclick="resetSession()">↺ Réinitialiser la session</button>
+        <button class="btn btn-danger" style="width:100%;" onclick="resetSession()">↺ Reinitialiser la session</button>
       </div>
     </aside>
 
-    <!-- MAIN -->
     <main class="main">
-      <!-- Status bar -->
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
         <span style="font-weight:800;font-size:1.1rem;">Tableau de bord</span>
         <div style="display:flex;align-items:center;gap:10px;">
-          <span class="conn-badge conn-ok" id="conn-badge"><span class="conn-dot"></span>Connecté</span>
+          <span class="conn-badge conn-ok" id="conn-badge"><span class="conn-dot"></span>Connecte</span>
           <span class="phase-badge phase-idle" id="phase-badge">⏸ En attente</span>
         </div>
       </div>
 
-      <!-- Question control -->
       <div class="card">
         <div class="card-title">
           Question active
-          <button class="btn btn-ghost btn-sm" onclick="toggleEditor()">✏️ Gérer les questions</button>
+          <button class="btn btn-ghost btn-sm" onclick="toggleEditor()">✏️ Gerer les questions</button>
         </div>
-
         <div class="question-nav">
           <button class="nav-btn" id="btn-prev" onclick="navigate(-1)" disabled>◀</button>
           <span class="q-counter" id="q-counter">Aucune question</span>
           <button class="nav-btn" id="btn-next" onclick="navigate(1)"  disabled>▶</button>
         </div>
-
         <div id="q-display">
-          <div class="q-text" style="color:var(--muted);font-weight:400;font-size:.95rem;">Sélectionnez une question ou ajoutez-en via "Gérer les questions".</div>
+          <div class="q-text" style="color:var(--muted);font-weight:400;font-size:.95rem;">Selectionnez une question ou ajoutez-en via "Gerer les questions".</div>
         </div>
-
         <div class="control-row" style="margin-top:14px;">
           <button class="btn btn-primary" id="btn-launch" onclick="launchQuestion()" disabled>▶ Lancer</button>
-          <button class="btn btn-warn"    id="btn-close"  onclick="closeAnswers()"   disabled>⏹ Fermer les réponses</button>
-          <button class="btn btn-success" id="btn-reveal" onclick="revealAnswer()"   disabled>👁 Révéler la réponse</button>
+          <button class="btn btn-warn"    id="btn-close"  onclick="closeAnswers()"   disabled>⏹ Fermer les reponses</button>
+          <button class="btn btn-success" id="btn-reveal" onclick="revealAnswer()"   disabled>👁 Reveler la reponse</button>
         </div>
       </div>
 
-      <!-- Stats -->
       <div class="card">
         <div class="card-title">Statistiques en direct</div>
         <div id="stats-panel">
-          <div class="no-stats">Lancez une question pour voir les statistiques apparaître ici en temps réel.</div>
+          <div class="no-stats">Lancez une question pour voir les statistiques.</div>
         </div>
       </div>
 
-      <!-- Editor (hidden) -->
       <div class="card" id="editor-card" style="display:none;">
         <div class="card-title">
           Banque de questions
           <button class="btn btn-primary btn-sm" onclick="showAddForm()">+ Ajouter une question</button>
         </div>
-
         <div class="editor-form" id="editor-form">
           <div class="form-group">
             <label class="form-label">Texte de la question</label>
-            <textarea class="form-input" id="f-text" rows="2" placeholder="Entrez votre question…"></textarea>
+            <textarea class="form-input" id="f-text" rows="2" placeholder="Entrez votre question..."></textarea>
           </div>
           <div class="form-group">
-            <label class="form-label">Options de réponse — cochez ✓ la bonne réponse</label>
+            <label class="form-label">Options de reponse — cochez la bonne reponse</label>
             <div class="options-grid" id="options-grid"></div>
           </div>
           <div style="display:flex;gap:10px;justify-content:flex-end;">
@@ -364,13 +455,8 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
             <button class="btn btn-primary btn-sm" onclick="saveQuestion()">💾 Enregistrer</button>
           </div>
         </div>
-
         <div class="q-list" id="q-edit-list"></div>
-
-        <div style="padding-top:12px;border-top:1px solid var(--border);">
-        </div>
       </div>
-
     </main>
   </div>
 </div>
@@ -388,46 +474,180 @@ let currentNavIndex = 0;
 let phase           = 'idle';
 let editingIndex    = null;
 let studentUrl      = '';
+let trainerId       = '';
+let trainerName     = '';
+let currentFormation = null;
+let formationsList  = [];
+let selectedAccount = null;
 
 // ══════════════════════════════════════════
-// AUTH
+// AUTH — Load trainer accounts dynamically
 // ══════════════════════════════════════════
-document.getElementById('auth-pw').addEventListener('keydown', e => {
-  if (e.key === 'Enter') authenticate();
+(async function loadAccounts() {
+  try {
+    const res = await fetch('/trainers-list');
+    const trainers = await res.json();
+    const container = document.getElementById('account-buttons');
+    container.innerHTML = trainers.map(t => `
+      <button class="account-btn" data-id="${esc(t.id)}" onclick="selectAccount('${esc(t.id)}', this)">
+        <div class="acc-icon">${esc(t.name.charAt(0).toUpperCase())}</div>
+        <div class="acc-name">${esc(t.name)}</div>
+      </button>
+    `).join('');
+  } catch(e) {
+    document.getElementById('auth-error').textContent = 'Impossible de charger les comptes.';
+  }
+})();
+
+function selectAccount(id, btn) {
+  selectedAccount = id;
+  document.querySelectorAll('.account-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById('pw-section').classList.add('visible');
+  document.getElementById('auth-pw').value = '';
+  document.getElementById('auth-pw').focus();
+  document.getElementById('auth-error').textContent = '';
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    const authVisible = document.getElementById('auth-screen').offsetParent !== null;
+    if (authVisible && document.getElementById('auth-pw') === document.activeElement) {
+      authenticate();
+    }
+    if (document.getElementById('new-formation-name') === document.activeElement) {
+      createFormation();
+    }
+  }
 });
 
 let authDone = false;
 
 function authenticate() {
+  if (!selectedAccount) {
+    document.getElementById('auth-error').textContent = 'Choisissez un compte.';
+    return;
+  }
   const pw = document.getElementById('auth-pw').value.trim();
   if (!pw) return;
   if (sse) { sse.close(); sse = null; }
   authDone = false;
   document.getElementById('auth-error').textContent = '';
 
-  const url = `/events?clientId=${encodeURIComponent(clientId)}&role=trainer&password=${encodeURIComponent(pw)}`;
+  const url = `/events?clientId=${encodeURIComponent(clientId)}&role=trainer&trainerId=${encodeURIComponent(selectedAccount)}&password=${encodeURIComponent(pw)}`;
   sse = new EventSource(url);
   sse.onmessage = e => handle(JSON.parse(e.data));
   sse.onerror = () => {
     if (!authDone) {
-      document.getElementById('auth-error').textContent = '❌ Connexion impossible. Vérifiez que le serveur est bien démarré.';
-      sse.close();
-      sse = null;
+      document.getElementById('auth-error').textContent = 'Connexion impossible ou mot de passe incorrect.';
+      if (sse) { sse.close(); sse = null; }
     } else {
       setConn(false);
     }
   };
 }
 
+function logout() {
+  if (sse) { sse.close(); sse = null; }
+  authDone = false;
+  selectedAccount = null;
+  trainerId = '';
+  currentFormation = null;
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('formation-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('pw-section').classList.remove('visible');
+  document.querySelectorAll('.account-btn').forEach(b => b.classList.remove('selected'));
+}
+
 // ══════════════════════════════════════════
-// ACTION → POST
+// FORMATION SELECTOR
+// ══════════════════════════════════════════
+function showFormationScreen() {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('formation-screen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('formation-title').textContent = trainerName + ' — Mes formations';
+  renderFormationList();
+}
+
+function renderFormationList() {
+  const el = document.getElementById('formation-list');
+  if (!formationsList.length) {
+    el.innerHTML = '<div class="no-formations">Aucune formation. Creez-en une ci-dessous.</div>';
+    return;
+  }
+  el.innerHTML = formationsList.map(name => {
+    const safeName = name.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    return `
+      <div class="formation-item" onclick="selectFormation('${safeName}')">
+        <div class="fi-icon">📚</div>
+        <div class="fi-name">${esc(name)}</div>
+        <button class="fi-del" onclick="event.stopPropagation();deleteFormation('${safeName}')" title="Supprimer">✕</button>
+      </div>
+    `;
+  }).join('');
+}
+
+function selectFormation(name) {
+  action({ type: 'trainer-select-formation', formation: name });
+}
+
+function createFormation() {
+  const input = document.getElementById('new-formation-name');
+  const name = input.value.trim();
+  if (!name) return;
+  action({ type: 'trainer-create-formation', formation: name });
+  input.value = '';
+}
+
+function deleteFormation(name) {
+  if (!confirm('Supprimer la formation "' + name + '" et toutes ses questions ?')) return;
+  action({ type: 'trainer-delete-formation', formation: name });
+}
+
+function changeFormation() {
+  showFormationScreen();
+}
+
+// ══════════════════════════════════════════
+// ENTER DASHBOARD
+// ══════════════════════════════════════════
+function enterDashboard(formation, qs) {
+  currentFormation = formation;
+  questions = qs || [];
+  currentNavIndex = 0;
+  phase = 'idle';
+
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('formation-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+
+  document.getElementById('trainer-label').textContent = trainerName;
+  document.getElementById('current-formation-name').textContent = currentFormation;
+
+  studentUrl = window.location.origin + '/?room=' + encodeURIComponent(trainerId);
+  document.getElementById('url-box').textContent = studentUrl;
+  const qr = document.getElementById('qr-img');
+  qr.src = 'https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=' + encodeURIComponent(studentUrl) + '&bgcolor=ffffff&color=1e1b4b&margin=4';
+  qr.onerror = () => { qr.style.display = 'none'; };
+
+  renderQuestionList();
+  renderCurrentQuestion();
+  updatePhase(phase);
+  document.getElementById('stats-panel').innerHTML = '<div class="no-stats">Lancez une question pour voir les statistiques.</div>';
+  setConn(true);
+}
+
+// ══════════════════════════════════════════
+// ACTION
 // ══════════════════════════════════════════
 function action(obj) {
   fetch('/action', {
-    method:  'POST',
+    method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify({ ...obj, clientId }),
-  }).catch(() => {}); // ignorer erreurs réseau silencieusement
+    body: JSON.stringify({ ...obj, clientId }),
+  }).catch(() => {});
 }
 
 // ══════════════════════════════════════════
@@ -437,29 +657,43 @@ function handle(msg) {
   switch (msg.type) {
 
     case 'auth-failed':
-      document.getElementById('auth-error').textContent = '❌ Mot de passe incorrect.';
-      sse.close();
+      document.getElementById('auth-error').textContent = 'Mot de passe incorrect.';
+      if (sse) { sse.close(); sse = null; }
       break;
 
     case 'trainer-ok':
       authDone = true;
-      document.getElementById('auth-screen').style.display = 'none';
-      document.getElementById('app').style.display = 'block';
-      studentUrl = window.location.origin;
-      document.getElementById('url-box').textContent = studentUrl;
-      // QR code via img tag (Google Charts API — works with internet)
-      const qr = document.getElementById('qr-img');
-      qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(studentUrl)}&bgcolor=ffffff&color=1e1b4b&margin=4`;
-      qr.onerror = () => { qr.style.display='none'; };
-      questions       = msg.questions || [];
-      phase           = msg.session?.phase || 'idle';
-      currentNavIndex = msg.session?.currentIndex >= 0 ? msg.session.currentIndex : 0;
-      renderQuestionList();
-      renderCurrentQuestion();
-      renderStudents(msg.students || []);
-      updatePhase(phase);
-      if (msg.stats) renderStats(msg.stats);
+      trainerId = msg.trainerId;
+      trainerName = msg.trainerName;
+      formationsList = msg.formations || [];
       setConn(true);
+      if (msg.currentFormation && msg.questions) {
+        enterDashboard(msg.currentFormation, msg.questions);
+        phase = msg.session?.phase || 'idle';
+        currentNavIndex = msg.session?.currentIndex >= 0 ? msg.session.currentIndex : 0;
+        renderQuestionList();
+        renderCurrentQuestion();
+        renderStudents(msg.students || []);
+        updatePhase(phase);
+        if (msg.stats) renderStats(msg.stats);
+      } else {
+        showFormationScreen();
+      }
+      break;
+
+    case 'formation-selected':
+      enterDashboard(msg.formation, msg.questions);
+      break;
+
+    case 'formations-updated':
+      formationsList = msg.formations || [];
+      if (document.getElementById('formation-screen').style.display === 'flex') {
+        renderFormationList();
+      }
+      if (msg.currentFormation === null && currentFormation) {
+        currentFormation = null;
+        showFormationScreen();
+      }
       break;
 
     case 'students-update':
@@ -490,6 +724,7 @@ function handle(msg) {
       phase = 'revealed';
       updatePhase('revealed');
       renderStats(msg.stats);
+      renderCurrentQuestion();
       break;
 
     case 'session-reset':
@@ -497,8 +732,7 @@ function handle(msg) {
       currentNavIndex = 0;
       updatePhase('idle');
       renderCurrentQuestion();
-      renderStudents(msg.students || []);
-      document.getElementById('stats-panel').innerHTML = '<div class="no-stats">Lancez une question pour voir les statistiques apparaître ici en temps réel.</div>';
+      document.getElementById('stats-panel').innerHTML = '<div class="no-stats">Lancez une question pour voir les statistiques.</div>';
       break;
 
     case 'questions-updated':
@@ -516,14 +750,14 @@ function updatePhase(p) {
   phase = p;
   const badge = document.getElementById('phase-badge');
   const map = {
-    idle:     ['⏸ En attente',          'phase-idle'],
-    active:   ['🟢 Question en cours',   'phase-active'],
-    closed:   ['🟡 Réponses fermées',    'phase-closed'],
-    revealed: ['✅ Réponse révélée',     'phase-revealed'],
+    idle:     ['⏸ En attente',        'phase-idle'],
+    active:   ['🟢 Question en cours', 'phase-active'],
+    closed:   ['🟡 Reponses fermees',  'phase-closed'],
+    revealed: ['✅ Reponse revelee',   'phase-revealed'],
   };
   const [label, cls] = map[p] || map.idle;
   badge.textContent = label;
-  badge.className   = 'phase-badge ' + cls;
+  badge.className = 'phase-badge ' + cls;
 
   const canLaunch = (p === 'idle' || p === 'revealed') && questions.length > 0 && currentNavIndex >= 0;
   document.getElementById('btn-launch').disabled = !canLaunch;
@@ -534,7 +768,7 @@ function updatePhase(p) {
 function setConn(ok) {
   const b = document.getElementById('conn-badge');
   b.className = 'conn-badge ' + (ok ? 'conn-ok' : 'conn-err');
-  b.innerHTML = `<span class="conn-dot"></span>${ok ? 'Connecté' : 'Déconnecté'}`;
+  b.innerHTML = '<span class="conn-dot"></span>' + (ok ? 'Connecte' : 'Deconnecte');
 }
 
 // ══════════════════════════════════════════
@@ -544,10 +778,10 @@ function launchQuestion() {
   if (currentNavIndex < 0 || currentNavIndex >= questions.length) return;
   action({ type: 'trainer-launch', questionIndex: currentNavIndex });
 }
-function closeAnswers()  { action({ type: 'trainer-close' }); }
-function revealAnswer()  { action({ type: 'trainer-reveal' }); }
-function resetSession()  {
-  if (!confirm('Réinitialiser ? Tous les scores et réponses seront effacés.')) return;
+function closeAnswers() { action({ type: 'trainer-close' }); }
+function revealAnswer() { action({ type: 'trainer-reveal' }); }
+function resetSession() {
+  if (!confirm('Reinitialiser ? Tous les scores et reponses seront effaces.')) return;
   action({ type: 'trainer-reset' });
 }
 
@@ -562,29 +796,32 @@ function navigate(dir) {
 }
 
 function renderCurrentQuestion() {
-  const counter  = document.getElementById('q-counter');
-  const display  = document.getElementById('q-display');
+  const counter = document.getElementById('q-counter');
+  const display = document.getElementById('q-display');
   document.getElementById('btn-prev').disabled = currentNavIndex <= 0;
   document.getElementById('btn-next').disabled = currentNavIndex >= questions.length - 1;
 
   if (!questions.length) {
     counter.textContent = 'Aucune question';
-    display.innerHTML = '<div class="q-text" style="color:var(--muted);font-weight:400;">Ajoutez des questions via "Gérer les questions".</div>';
+    display.innerHTML = '<div class="q-text" style="color:var(--muted);font-weight:400;">Ajoutez des questions via "Gerer les questions".</div>';
     return;
   }
-  const q      = questions[currentNavIndex];
+  const q = questions[currentNavIndex];
   const labels = ['A', 'B', 'C', 'D'];
-  counter.textContent = `Question ${currentNavIndex + 1} / ${questions.length}`;
-  display.innerHTML = `
-    <div class="q-text">${esc(q.text)}</div>
-    <div class="q-options-grid">
-      ${q.options.map((o, i) => `
-        <div class="q-option ${i === q.correctIndex ? 'correct' : ''}">
-          <span class="opt-label">${labels[i]}.</span>${esc(o)}
-        </div>
-      `).join('')}
-    </div>
-  `;
+  counter.textContent = 'Question ' + (currentNavIndex + 1) + ' / ' + questions.length;
+
+  // Only show correct answer highlight when revealed
+  const showCorrect = (phase === 'revealed');
+
+  display.innerHTML =
+    '<div class="q-text">' + esc(q.text) + '</div>' +
+    '<div class="q-options-grid">' +
+      q.options.map((o, i) =>
+        '<div class="q-option ' + (showCorrect && i === q.correctIndex ? 'correct' : '') + '">' +
+          '<span class="opt-label">' + labels[i] + '.</span>' + esc(o) +
+        '</div>'
+      ).join('') +
+    '</div>';
   updatePhase(phase);
 }
 
@@ -595,71 +832,78 @@ function renderStudents(students) {
   document.getElementById('student-count').textContent = students.length;
   const list = document.getElementById('student-list');
   if (!students.length) {
-    list.innerHTML = '<div class="no-students">Aucun stagiaire connecté</div>';
+    list.innerHTML = '<div class="no-students">Aucun stagiaire connecte</div>';
     return;
   }
-  list.innerHTML = students.map(s => `
-    <div class="student-item ${s.answered ? 'answered' : ''}">
-      <span class="student-dot ${s.answered ? 'on' : ''}"></span>
-      <span class="student-name">${esc(s.name)}</span>
-      <span class="student-check">✓</span>
-    </div>
-  `).join('');
+  list.innerHTML = students.map(s =>
+    '<div class="student-item ' + (s.answered ? 'answered' : '') + '">' +
+      '<span class="student-dot ' + (s.answered ? 'on' : '') + '"></span>' +
+      '<span class="student-name">' + esc(s.name) + '</span>' +
+      '<span class="student-check">✓</span>' +
+    '</div>'
+  ).join('');
 }
 
 // ══════════════════════════════════════════
-// STATS
+// STATS — details hidden until reveal
 // ══════════════════════════════════════════
 function renderStats(stats) {
   if (!stats) return;
   const panel = document.getElementById('stats-panel');
-  const q     = questions[currentNavIndex];
+  const q = questions[currentNavIndex];
   if (!q) return;
 
-  const labels   = ['A', 'B', 'C', 'D'];
+  const labels = ['A', 'B', 'C', 'D'];
   const revealed = stats.correctIndex !== null;
-  const pct      = stats.answeredPercent;
-  // SVG ring circumference = 2π × 36 ≈ 226
-  const offset   = 226 - (226 * pct / 100);
-  const correctCnt = revealed ? (stats.counts[stats.correctIndex] || 0) : null;
+  const pct = stats.answeredPercent;
+  const offset = 226 - (226 * pct / 100);
 
-  const bars = q.options.map((opt, i) => {
-    const cnt = stats.counts[i] || 0;
-    const p   = stats.percentages[i] || 0;
-    const ok  = revealed && i === stats.correctIndex;
-    const ko  = revealed && i !== stats.correctIndex;
-    return `
-      <div class="bar-row">
-        <div class="bar-letter ${labels[i]} ${ok ? 'correct' : ''} ${ko ? 'wrong' : ''}">${labels[i]}</div>
-        <div class="bar-text">
-          <div class="bar-opt" title="${esc(opt)}">${esc(opt)}</div>
-          <div class="bar-track"><div class="bar-fill ${labels[i]} ${ok ? 'correct' : ''} ${ko ? 'wrong' : ''}" style="width:${p}%"></div></div>
-        </div>
-        <div class="bar-nums">${p}%&nbsp;<span style="color:var(--muted);font-weight:400;">(${cnt})</span></div>
-      </div>
-    `;
-  }).join('');
+  let html =
+    '<div class="stats-header">' +
+      '<div class="ring-wrap">' +
+        '<svg class="ring-svg" viewBox="0 0 88 88">' +
+          '<circle class="ring-bg" cx="44" cy="44" r="36"/>' +
+          '<circle class="ring-fill" cx="44" cy="44" r="36" style="stroke-dashoffset:' + offset + '"/>' +
+        '</svg>' +
+        '<div class="ring-center">' +
+          '<div class="ring-pct">' + pct + '%</div>' +
+          '<div class="ring-sub">repondu</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="stats-meta">' +
+        '<div class="big">' + stats.answeredCount + ' / ' + stats.totalStudents + '</div>' +
+        '<div class="small">stagiaires ont repondu</div>';
 
-  panel.innerHTML = `
-    <div class="stats-header">
-      <div class="ring-wrap">
-        <svg class="ring-svg" viewBox="0 0 88 88">
-          <circle class="ring-bg"   cx="44" cy="44" r="36"/>
-          <circle class="ring-fill" cx="44" cy="44" r="36" style="stroke-dashoffset:${offset}"/>
-        </svg>
-        <div class="ring-center">
-          <div class="ring-pct">${pct}%</div>
-          <div class="ring-sub">répondu</div>
-        </div>
-      </div>
-      <div class="stats-meta">
-        <div class="big">${stats.answeredCount} / ${stats.totalStudents}</div>
-        <div class="small">stagiaires ont répondu</div>
-        ${revealed && correctCnt !== null ? `<div class="correct-pill">✓ ${correctCnt} bonne${correctCnt > 1 ? 's' : ''} réponse${correctCnt > 1 ? 's' : ''}</div>` : ''}
-      </div>
-    </div>
-    <div class="bar-chart">${bars}</div>
-  `;
+  if (revealed) {
+    const correctCnt = stats.counts[stats.correctIndex] || 0;
+    html += '<div class="correct-pill">✓ ' + correctCnt + ' bonne' + (correctCnt > 1 ? 's' : '') + ' reponse' + (correctCnt > 1 ? 's' : '') + '</div>';
+  }
+
+  html += '</div></div>';
+
+  if (revealed) {
+    html += '<div class="bar-chart">';
+    q.options.forEach((opt, i) => {
+      const cnt = stats.counts[i] || 0;
+      const p = stats.percentages[i] || 0;
+      const ok = i === stats.correctIndex;
+      const ko = i !== stats.correctIndex;
+      html +=
+        '<div class="bar-row">' +
+          '<div class="bar-letter ' + labels[i] + (ok ? ' correct' : '') + (ko ? ' wrong' : '') + '">' + labels[i] + '</div>' +
+          '<div class="bar-text">' +
+            '<div class="bar-opt" title="' + esc(opt) + '">' + esc(opt) + '</div>' +
+            '<div class="bar-track"><div class="bar-fill ' + labels[i] + (ok ? ' correct' : '') + (ko ? ' wrong' : '') + '" style="width:' + p + '%"></div></div>' +
+          '</div>' +
+          '<div class="bar-nums">' + p + '%&nbsp;<span style="color:var(--muted);font-weight:400;">(' + cnt + ')</span></div>' +
+        '</div>';
+    });
+    html += '</div>';
+  } else {
+    html += '<div class="stats-hidden">Le detail des reponses sera visible apres avoir clique sur "Reveler la reponse".</div>';
+  }
+
+  panel.innerHTML = html;
 }
 
 // ══════════════════════════════════════════
@@ -677,13 +921,13 @@ function renderQuestionList() {
     el.innerHTML = '<div style="color:var(--muted);font-size:.88rem;padding:4px 0;">Aucune question. Cliquez sur "+ Ajouter une question".</div>';
     return;
   }
-  el.innerHTML = questions.map((q, i) => `
-    <div class="q-edit-card ${i === currentNavIndex ? 'active' : ''}" onclick="selectQ(${i})">
-      <div class="q-edit-num">${i + 1}</div>
-      <div class="q-edit-text">${esc(q.text)}</div>
-      <button class="q-edit-del" onclick="event.stopPropagation();deleteQ(${i})" title="Supprimer">✕</button>
-    </div>
-  `).join('');
+  el.innerHTML = questions.map((q, i) =>
+    '<div class="q-edit-card ' + (i === currentNavIndex ? 'active' : '') + '" onclick="selectQ(' + i + ')">' +
+      '<div class="q-edit-num">' + (i + 1) + '</div>' +
+      '<div class="q-edit-text">' + esc(q.text) + '</div>' +
+      '<button class="q-edit-del" onclick="event.stopPropagation();deleteQ(' + i + ')" title="Supprimer">✕</button>' +
+    '</div>'
+  ).join('');
 }
 
 function selectQ(i) {
@@ -712,13 +956,13 @@ function showAddForm() {
 
 function buildOptsGrid(opts, correct) {
   const labels = ['A', 'B', 'C', 'D'];
-  document.getElementById('options-grid').innerHTML = opts.map((o, i) => `
-    <div class="opt-row">
-      <input type="radio" name="correct-opt" value="${i}" id="r${i}" ${i === correct ? 'checked' : ''}>
-      <label class="lbl" for="r${i}">${labels[i]}</label>
-      <input class="form-input" type="text" id="oi${i}" value="${esc(o)}" placeholder="Option ${labels[i]}">
-    </div>
-  `).join('');
+  document.getElementById('options-grid').innerHTML = opts.map((o, i) =>
+    '<div class="opt-row">' +
+      '<input type="radio" name="correct-opt" value="' + i + '" id="r' + i + '" ' + (i === correct ? 'checked' : '') + '>' +
+      '<label class="lbl" for="r' + i + '">' + labels[i] + '</label>' +
+      '<input class="form-input" type="text" id="oi' + i + '" value="' + esc(o) + '" placeholder="Option ' + labels[i] + '">' +
+    '</div>'
+  ).join('');
 }
 
 function closeForm() {
@@ -728,9 +972,9 @@ function closeForm() {
 
 function saveQuestion() {
   const text = document.getElementById('f-text').value.trim();
-  if (!text) { toast('⚠️ Veuillez entrer le texte de la question.'); return; }
-  const opts = [0,1,2,3].map(i => document.getElementById(`oi${i}`).value.trim());
-  if (opts.some(o => !o)) { toast('⚠️ Veuillez remplir les 4 options.'); return; }
+  if (!text) { toast('Veuillez entrer le texte de la question.'); return; }
+  const opts = [0,1,2,3].map(i => document.getElementById('oi' + i).value.trim());
+  if (opts.some(o => !o)) { toast('Veuillez remplir les 4 options.'); return; }
   const correctIndex = parseInt(document.querySelector('input[name=correct-opt]:checked')?.value ?? '0', 10);
   const q = { id: Date.now(), text, options: opts, correctIndex };
   if (editingIndex !== null) {
@@ -743,7 +987,7 @@ function saveQuestion() {
   closeForm();
   renderQuestionList();
   renderCurrentQuestion();
-  toast('Question enregistrée ✓');
+  toast('Question enregistree ✓');
 }
 
 function syncQ() {
@@ -755,15 +999,16 @@ function syncQ() {
 // ══════════════════════════════════════════
 function copyURL() {
   if (!studentUrl) return;
-  navigator.clipboard.writeText(studentUrl).then(() => toast('Lien copié dans le presse-papier !'));
+  navigator.clipboard.writeText(studentUrl).then(() => toast('Lien copie !'));
 }
 
-function toast(msg, ms = 2600) {
+function toast(msg, ms) {
+  ms = ms || 2600;
   const el = document.getElementById('toast');
   el.textContent = msg;
   el.classList.add('show');
   clearTimeout(el._t);
-  el._t = setTimeout(() => el.classList.remove('show'), ms);
+  el._t = setTimeout(function() { el.classList.remove('show'); }, ms);
 }
 
 function esc(s) {
