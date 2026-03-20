@@ -47,8 +47,9 @@ def load_data():
     try:
         with open(DATA_FILE, 'r', encoding='utf-8') as f:
             data = json.load(f)
-            if isinstance(data, dict) and 'trainers' in data:
-                # Ensure formations key exists for all trainers
+            if isinstance(data, dict):
+                # Always use trainers from code (passwords etc.)
+                data['trainers'] = DEFAULT_DATA['trainers']
                 if 'formations' not in data:
                     data['formations'] = {}
                 for tid in data['trainers']:
