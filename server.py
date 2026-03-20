@@ -33,8 +33,8 @@ state_lock = threading.RLock()
 
 DEFAULT_DATA = {
     'trainers': {
-        'sylvain': {'name': 'Sylvain', 'password': 'sylvain2025'},
-        'invite':  {'name': 'Formateur Invite', 'password': 'invite2025'},
+        'sylvain': {'name': 'Sylvain', 'password': 'sylvain'},
+        'invite':  {'name': 'Formateur Invite', 'password': 'invite'},
     },
     'formations': {
         'sylvain': {},
